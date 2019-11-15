@@ -8,34 +8,21 @@ function love.load()
   else
     lovepotion = false
   end
-  
+  loaddata()
   if not lovepotion then
-    touchscreen = false
+    tscreen = true
     love.window.setMode(400,240)
     fire = "space"
-    tscreen = true
     delt = true
     love.window.setTitle("One Button Ninja Mayhem")
   else
     fire = "a"
-    touchscreen = true
     delt = false
     ez.setdelt()
   end
-
   love.graphics.setBackgroundColor(255,255,255)
-  dmult=1
-  hits = 1
-  rotation = 4
   gstate = "title"
-  score = 0
-  dl = false
-  stars = {}
-  ninjas = {}
-  angle = 180
-  spawnrate = 120
-  spawntimer = 60
-  showline = true
+  dmult=1
   img = {
     ninja = ez.newanim("ninja.png",8,0,false,0),
     rninja = ez.newanim("rninja.png",8,15,true,0),
@@ -58,8 +45,31 @@ function love.load()
     dead = ez.newanim("dninja.png",10,0,true,0),
     pdead = ez.newanim("pdead.png",10,5,false,0),
     logo = ez.newanim("animlogo.png",200,3,false,0),
-    menu = ez.newanim("menu.png",160,0,true,0)
+    menu = ez.newanim("menu.png",160,0,true,0),
+    gmbs = ez.newanim("gmbs.png",160,0,true,0)
   }
+end
+function loaddata()
+  l = 0
+  for line in io.lines ("save.txt") do
+    if l == 0 then
+      ambushscore = tonumber(line)
+    end
+    if l == 1 then
+      tagteamscore = tonumber(line)
+    end
+    if l == 2 then
+      powerupscore = tonumber(line)
+    end
+    if l == 3 then
+      if tonumber(line) == 0 then
+        touchscreen = true
+      else
+        touchscreen = false
+      end
+    end
+    l = l + 1
+  end
 end
 function potiontest()
   love.graphics.setScreen('top')
@@ -182,6 +192,25 @@ function love.mousereleased(x,y,key)
     end
   end
 end
+function setup(mode)
+  if mode == "ambush" then
+
+    hits = 1
+    rotation = 4
+
+    score = 0
+
+    stars = {}
+    ninjas = {}
+    angle = 180
+    spawnrate = 120
+    spawntimer = 60
+  end
+  if mode == "title" then
+    img.logo.f = 1
+    img.logo.time = 0
+  end
+end
 
 function love.update()
 
@@ -193,7 +222,7 @@ function love.update()
   if gstate == "title" then
     if love.mouse.isDown(1) then
       if love.mouse.getX() < 80 then
-
+        setup("ambush")
         gstate = "ambush"
       end
     end
@@ -248,9 +277,21 @@ function love.update()
       showline = false
       for i,v in ipairs(ninjas) do
         v.hit = true
-
       end
-      
+      if score > ambushscore then
+        ambushscore = score
+        savedata()
+      end
+      if love.mouse.isDown(1) then
+        if love.mouse.getX() < 80 then
+          setup("ambush")
+          gstate = "ambush"
+        end
+        if love.mouse.getX() > 240 then
+          setup("title")
+          gstate = "title"
+        end
+      end
     end
     ez.animupdate(img.rninja)
     ez.animupdate(img.ninja)
@@ -259,6 +300,21 @@ function love.update()
       ez.animupdate(v)
     end
   end
+end
+
+function savedata()
+  save = io.open("save.txt", "w")
+  save:write(ambushscore,"\n")
+  save:write(tagteamscore,"\n")
+  save:write(powerupscore,"\n")
+  if touchscreen then
+    save:write("0","\n")
+  else
+    save:write("1","\n")
+  end
+  save:close()
+  
+  
 end
 function love.draw()
   if gstate == "title" then
@@ -306,9 +362,11 @@ function love.draw()
       ez.animdraw(img.bs[hits],0,0)
       if hits ~= 11 then
         ez.animdraw(img.eyes,75+(3 * math.cos((90 - angle) * math.pi / 180)),46+(0 - 3 * math.sin((90 - angle) * math.pi / 180)))
+      else
+        ez.animdraw(img.gmbs,0,0)
       end
       love.graphics.setColor(0,0,0)
-      love.graphics.print(score)
+      love.graphics.print(score,2,2)
     end
   end
 end
