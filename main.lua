@@ -56,6 +56,7 @@ function love.load()
       },
     eyes = ez.newanim("eyes.png",10,0,true,0),
     dead = ez.newanim("dninja.png",10,0,true,0),
+    pdead = ez.newanim("pdead.png",10,5,false,0),
     logo = ez.newanim("animlogo.png",200,3,false,0),
     menu = ez.newanim("menu.png",160,0,true,0)
   }
@@ -183,6 +184,7 @@ function love.mousereleased(x,y,key)
 end
 
 function love.update()
+
   if delt == true then
     dmult = love.timer.getDelta()*60
   else
@@ -242,15 +244,17 @@ function love.update()
     end
     checkcollision()
     if hits == 11 then
+      ez.animupdate(img.pdead)
       showline = false
       for i,v in ipairs(ninjas) do
         v.hit = true
-        
+
       end
       
     end
     ez.animupdate(img.rninja)
     ez.animupdate(img.ninja)
+
     for i,v in ipairs(img.bs) do
       ez.animupdate(v)
     end
@@ -290,7 +294,11 @@ function love.draw()
     for i,v in ipairs(stars) do
       drawstar(v)
     end
-    ez.animdraw(img.ninja,96,55)
+    if hits ~= 11 then
+      ez.animdraw(img.ninja,96,55)
+    else
+      ez.animdraw(img.pdead,96,55)
+    end
     if lovepotion or not tscreen then
       if lovepotion then
         love.graphics.setScreen('bottom')
