@@ -22,6 +22,7 @@ function love.load()
   end
   love.graphics.setBackgroundColor(255,255,255)
   gstate = "title"
+  paused = false
   dmult=1
   img = {
     ninja = ez.newanim("ninja.png",8,0,false,0),
@@ -46,7 +47,8 @@ function love.load()
     pdead = ez.newanim("pdead.png",10,5,false,0),
     logo = ez.newanim("animlogo.png",200,3,false,0),
     menu = ez.newanim("menu.png",160,0,true,0),
-    gmbs = ez.newanim("gmbs.png",160,0,true,0)
+    gmbs = ez.newanim("gmbs.png",160,0,true,0),
+    ps = ez.newanim("pause.png",160,10,true,0)
   }
 end
 function loaddata()
@@ -88,7 +90,7 @@ function checkcollision()
     end
   end
   for ni,nv in ipairs(ninjas) do
-    if nv.x >= 88 and nv.x <= 104 and nv.y >= 45 and nv.y <= 65 then
+    if nv.x >= 88 and nv.x <= 104 and nv.y >= 45 and nv.y <= 65 and not nv.dead and hits ~= 11 then
       nv.hit = true
       hits = hits + 1
     end
@@ -162,20 +164,22 @@ function love.keypressed(key)
   if key == "s" and not lovepotion then
     tscreen = not tscreen
   end
-  if key == "select" then
-    touchscreen = not touchscreen
+  if key == "start" or key == "p" then
+    paused = not paused
   end
 end
 function love.keyreleased(key)
-  if gstate == "ambush" and hits ~= 11 then
-    if not touchscreen then
-      if key == fire then
-        if rotation == 4 then
-          rotation = -4
-        else
-          rotation = 4
+  if not paused then
+    if gstate == "ambush" and hits ~= 11 then
+      if not touchscreen then
+        if key == fire then
+          if rotation == 4 then
+            rotation = -4
+          else
+            rotation = 4
+          end
+          newstar(angle,4)
         end
-        newstar(angle,4)
       end
     end
   end
@@ -185,14 +189,16 @@ function love.mousepressed(x,y,key)
   
 end
 function love.mousereleased(x,y,key)
-  if gstate == "ambush" and hits ~= 11 then
-    if touchscreen then
-      if rotation == 4 then
-        rotation = -4
-      else
-        rotation = 4
+  if not paused then
+    if gstate == "ambush" and hits ~= 11 then
+      if touchscreen then
+        if rotation == 4 then
+          rotation = -4
+        else
+          rotation = 4
+        end
+        newstar(angle,4)
       end
-      newstar(angle,4)
     end
   end
 end
@@ -217,96 +223,98 @@ function setup(mode)
 end
 
 function love.update()
-
-  if delt == true then
-    dmult = love.timer.getDelta()*60
-  else
-    dmult = 1
-  end
-  if gstate == "title" then
-    if love.mouse.isDown(1) then
-      if love.mouse.getX() < 80 then
-        setup("ambush")
-        gstate = "ambush"
-      end
+  if not paused then
+    if delt == true then
+      dmult = love.timer.getDelta()*60
+    else
+      dmult = 1
     end
-    ez.animupdate(img.logo)
-    
-  end
-  if gstate == "ambush" then
-    img.ninja.f = hits
-    if hits ~= 11 then
-      if not touchscreen then
-        if love.keyboard.isDown(fire) then
-          angle = angle + rotation * dmult
-          showline = true
-        else
-          showline = false
-        end
-      else
-        if love.mouse.isDown(1) then
-          angle = angle + rotation * dmult
-          showline = true
-        else
-          showline = false
-        end
-      end
-    end
-    for i,v in ipairs(stars) do
-      updatestar(v,i)
-    end
-    -- spawn ninjas
-    spawntimer = spawntimer - dmult
-    if hits ~= 11 then
-      if spawntimer <= 0 then 
-        spawntimer = spawntimer + spawnrate
-        if spawnrate > 60 then
-          spawnrate = spawnrate - 2
-        end
-        spawnloc = math.random(0,3)
-        if spawnloc == 0 then
-          newninja(-8,math.random(-10,120))
-        elseif spawnloc == 1 then
-          newninja(math.random(-8,200),-10)
-        elseif spawnloc == 2 then
-          newninja(200,math.random(-10,120))
-        else
-          newninja(math.random(-8,200),120)
-        end
-      end
-    end
-    for i,v in ipairs(ninjas) do
-      updateninja(v,i)
-    end
-    checkcollision()
-    if hits == 11 then
-      ez.animupdate(img.pdead)
-      showline = false
-      for i,v in ipairs(ninjas) do
-        v.hit = true
-      end
-      if score > ambushscore then
-        ambushscore = score
-        savedata()
-      end
+    if gstate == "title" then
       if love.mouse.isDown(1) then
         if love.mouse.getX() < 80 then
           setup("ambush")
           gstate = "ambush"
         end
-        if love.mouse.getX() > 240 then
-          setup("title")
-          gstate = "title"
+      end
+      ez.animupdate(img.logo)
+      
+    end
+    if gstate == "ambush" then
+      img.ninja.f = hits
+      if hits ~= 11 then
+        if not touchscreen then
+          if love.keyboard.isDown(fire) then
+            angle = angle + rotation * dmult
+            showline = true
+          else
+            showline = false
+          end
+        else
+          if love.mouse.isDown(1) then
+            angle = angle + rotation * dmult
+            showline = true
+          else
+            showline = false
+          end
         end
       end
-    end
-    ez.animupdate(img.rninja)
-    ez.animupdate(img.ninja)
+      for i,v in ipairs(stars) do
+        updatestar(v,i)
+      end
+      -- spawn ninjas
+      spawntimer = spawntimer - dmult
+      if hits ~= 11 then
+        if spawntimer <= 0 then 
+          spawntimer = spawntimer + spawnrate
+          if spawnrate > 60 then
+            spawnrate = spawnrate - 2
+          end
+          spawnloc = math.random(0,3)
+          if spawnloc == 0 then
+            newninja(-8,math.random(-10,120))
+          elseif spawnloc == 1 then
+            newninja(math.random(-8,200),-10)
+          elseif spawnloc == 2 then
+            newninja(200,math.random(-10,120))
+          else
+            newninja(math.random(-8,200),120)
+          end
+        end
+      end
+      for i,v in ipairs(ninjas) do
+        updateninja(v,i)
+      end
+      checkcollision()
+      if hits == 11 then
+        ez.animupdate(img.pdead)
+        showline = false
+        for i,v in ipairs(ninjas) do
+          v.hit = true
+        end
+        if score > ambushscore then
+          ambushscore = score
+          savedata()
+        end
+        if love.mouse.isDown(1) then
+          if love.mouse.getX() < 80 then
+            setup("ambush")
+            gstate = "ambush"
+          end
+          if love.mouse.getX() > 240 then
+            setup("title")
+            gstate = "title"
+          end
+        end
+      end
+      ez.animupdate(img.rninja)
+      ez.animupdate(img.ninja)
 
-    for i,v in ipairs(img.bs) do
-      ez.animupdate(v)
+      for i,v in ipairs(img.bs) do
+        ez.animupdate(v)
+      end
     end
   end
+  ez.animupdate(img.ps)
 end
 
 function savedata()
@@ -378,6 +386,19 @@ function love.draw()
       love.graphics.setColor(0,0,0)
       love.graphics.print(score,2,2)
       love.graphics.print("HI: "..ambushscore,2,222)
+    end
+  end
+  if paused then
+    love.graphics.setColor(255,255,255)
+    if lovepotion then
+      love.graphics.setScreen('top')
+    end
+    ez.animdraw(img.ps,20,0)
+    if lovepotion or not tscreen then
+      if lovepotion then
+        love.graphics.setScreen('bottom')
+      end
+      ez.animdraw(img.ps,0,0)
     end
   end
 end
