@@ -180,6 +180,10 @@ function love.keyreleased(key)
     end
   end
 end
+function love.mousepressed(x,y,key)
+  
+  
+end
 function love.mousereleased(x,y,key)
   if gstate == "ambush" and hits ~= 11 then
     if touchscreen then
@@ -203,7 +207,7 @@ function setup(mode)
     stars = {}
     ninjas = {}
     angle = 180
-    spawnrate = 120
+    spawnrate = 180
     spawntimer = 60
   end
   if mode == "title" then
@@ -256,6 +260,9 @@ function love.update()
     if hits ~= 11 then
       if spawntimer <= 0 then 
         spawntimer = spawntimer + spawnrate
+        if spawnrate > 60 then
+          spawnrate = spawnrate - 2
+        end
         spawnloc = math.random(0,3)
         if spawnloc == 0 then
           newninja(-8,math.random(-10,120))
@@ -318,6 +325,9 @@ function savedata()
 end
 function love.draw()
   if gstate == "title" then
+    if lovepotion then
+      love.graphics.setScreen('top')
+    end
     love.graphics.setColor(255,255,255)
     ez.animdraw(img.logo)
     love.graphics.setColor(0,0,0)
@@ -367,6 +377,7 @@ function love.draw()
       end
       love.graphics.setColor(0,0,0)
       love.graphics.print(score,2,2)
+      love.graphics.print("HI: "..ambushscore,2,222)
     end
   end
 end
